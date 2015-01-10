@@ -11,6 +11,7 @@ import (
 	"github.com/zenazn/goji/web"
 	"github.com/zenazn/goji/web/middleware"
 
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -34,13 +35,6 @@ func NewConfig(filePath string) *config {
 	panic("a valid config.toml is required to start")
 }
 
-func headerDumpMiddleware(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	if customHeader := r.Header.Get("X-CUSTOM"); customHeader != "" {
-		log.Printf("received request with custom Header: %s", customHeader)
-	}
-	next(rw, r)
-}
-
 func headerCheck(c *web.C, h http.Handler) http.Handler {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		if dropboxUser := r.Header.Get("X-Dropbox-User"); dropboxUser != "" && len(dropboxUser) == 64 {
@@ -55,11 +49,6 @@ func headerCheck(c *web.C, h http.Handler) http.Handler {
 	return http.HandlerFunc(handler)
 }
 
-func responseGivingMiddleware(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	rw.Header().Set("Content-Type", "json")
-	rw.Write([]byte(`{ "message": "all is fine!" }`))
-}
-
 // trying a chain of 2 middlewares
 func fakeDatabaseReq(c *web.C, h http.Handler) http.Handler {
 	handler := func(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +60,24 @@ func fakeDatabaseReq(c *web.C, h http.Handler) http.Handler {
 
 func printName(c web.C, w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Happy to see you %s, your dropboxUser token is: %s", c.URLParams["name"], c.Env["dropboxUser"])
+}
+
+// listImages is a closure function accepting a dropbox.Dropbox instance, and returning a goji Handler
+func listImages(db *dropbox.Dropbox) web.Handler {
+	gojiHandler := func(c web.C, w http.ResponseWriter, r *http.Request) {
+		db.SetAccessToken(c.Env["dropboxUser"].(string))
+		images, err := db.Search("", ".jpg", 1000, true)
+		if err != nil {
+			http.Error(w, err.Error(), 401)
+		}
+
+		imagesJ, err := json.Marshal(images)
+		if err != nil {
+			http.Error(w, err.Error(), 401)
+		}
+		w.Write(imagesJ)
+	}
+	return web.HandlerFunc(gojiHandler)
 }
 
 func main() {
@@ -104,7 +111,8 @@ func main() {
 	api.Use(headerCheck)
 
 	// specific /api/:name path
-	api.Get("/:name", cji.Use(fakeDatabaseReq).On(printName))
+	api.Get("/test/:name", cji.Use(fakeDatabaseReq).On(printName))
+	api.Get("/search", listImages(db))
 
 	goji.Serve()
 
