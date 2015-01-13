@@ -1,0 +1,64 @@
+func headerCheck(c *web.C, h http.Handler) http.Handler {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		if dropboxUser := r.Header.Get("X-Dropbox-User"); dropboxUser != "" && len(dropboxUser) == 64 {
+			// header syntactically correct
+			log.Printf("dropbox user: %s", dropboxUser)
+			c.Env["dropboxUser"] = dropboxUser
+			h.ServeHTTP(w, r)
+		} else {
+			http.Error(w, "missing X-Dropbox-User Header", 400)
+		}
+	}
+	return http.HandlerFunc(handler)
+}
+
+// trying a chain of 2 middlewares
+func fakeDatabaseReq(c *web.C, h http.Handler) http.Handler {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(5 * 100 * time.Millisecond)
+		h.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(handler)
+}
+
+func printName(c web.C, w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Happy to see you %s, your dropboxUser token is: %s", c.URLParams["name"], c.Env["dropboxUser"])
+}
+
+// listImages is a closure function accepting a dropbox.Dropbox instance, and returning a goji Handler
+func listImages(db *dropbox.Dropbox) web.Handler {
+	gojiHandler := func(c web.C, w http.ResponseWriter, r *http.Request) {
+		db.SetAccessToken(c.Env["dropboxUser"].(string))
+		images, err := db.Search("", ".jpg", 1000, true)
+		if err != nil {
+			http.Error(w, err.Error(), 401)
+		}
+
+		imagesJ, err := json.Marshal(images)
+		if err != nil {
+			http.Error(w, err.Error(), 401)
+		}
+		w.Write(imagesJ)
+	}
+	return web.HandlerFunc(gojiHandler)
+}
+
+	/*
+			db.SetAccessToken("****************************************************************")
+
+			startTime := time.Now()
+			images, err := db.Search("", ".jpg", 1000, true)
+			dropboxElapsed := time.Since(startTime)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			var thumbAvailable int
+			for _, img := range images {
+				if img.ThumbExists {
+					thumbAvailable = thumbAvailable + 1
+				}
+			}
+			log.Printf(
+				`images with thumbnail available: %d
+		    time elapsed: %s`, thumbAvailable, dropboxElapsed.String())
+	*/
