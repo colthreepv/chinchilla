@@ -4,13 +4,20 @@ import (
 	"github.com/stacktic/dropbox"
 	mgo "gopkg.in/mgo.v2"
 
-	_ "github.com/pressly/cji"
+	// "github.com/pressly/cji"
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
 	"github.com/zenazn/goji/web/middleware"
 
+	"github.com/fatih/color"
+
 	"log"
 )
+
+// colorized logger
+var info = color.New(color.FgYellow).SprintfFunc()
+var success = color.New(color.FgGreen).SprintfFunc()
+var debug = color.New(color.FgRed).SprintfFunc()
 
 var chi *chiConfig
 var chiMongo *mgo.Session
@@ -19,15 +26,18 @@ func main() {
 	chi = newChiConfig("config.toml")
 	db := dropbox.NewDropbox()
 	db.SetAppInfo(chi.Dropbox.Key, chi.Dropbox.Secret)
+	log.Println(info("Trying to establish connection with mongoDB server %s", chi.Mongo.Addrs))
 	chiMongo, err := mgo.DialWithInfo(&chi.Mongo)
 	if err != nil {
 		panic(err)
 	}
-	// databases, _ := chiMongo.DatabaseNames()
-	// log.Printf("chiMongo: %+v", databases)
-	log.Println(db)
+	log.Println(success("mongoDB success"))
+
+	var newUsers = make(chan *ChiUser)
+	go downloaderRoutine(newUsers)
 
 	// start goji
+	serveStatic()
 	api := web.New()
 	goji.Handle("/api/*", api)
 
@@ -39,7 +49,7 @@ func main() {
 	// specific /api/:name path
 	// api.Get("/test/:name", cji.Use(fakeDatabaseReq).On(printName))
 	// api.Get("/search", listImages(db))
-	api.Post("/hello", helloHandler(db, chiMongo))
+	api.Post("/hello", helloHandler(db, chiMongo, newUsers))
 
 	goji.Serve()
 }
