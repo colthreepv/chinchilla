@@ -1,0 +1,22 @@
+{
+  "name": "chinchilla-frontend",
+  "version": "0.0.1",
+  "authors": [
+    "mrgamer <mister.gamer@gmail.com>"
+  ],
+  "description": "Frontend part of chinchilla https://github.com/mrgamer/chinchilla",
+  "main": "index.html",
+  "moduleType": [
+    "globals"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/mrgamer/chinchilla-frontend",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
