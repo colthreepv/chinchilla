@@ -1,0 +1,53 @@
+{
+  "name": "chinchilla-frontend",
+  "version": "0.0.1",
+  "description": "Frontend part of chinchilla https://github.com/mrgamer/chinchilla",
+  "main": "src/main.js",
+  "dependencies": {
+    "bootstrap": "^3.3.2",
+    "delorean": "^0.8.7",
+    "jquery": "^2.1.3",
+    "react": "^0.12.2"
+  },
+  "browserify-shim": {
+    "cash-dom": "$"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "devDependencies": {
+    "browserify": "^8.1.1",
+    "browserify-shim": "^3.8.2",
+    "gulp": "^3.8.10",
+    "gulp-nunjucks-html": "^1.1.2",
+    "run-sequence": "^1.0.2",
+    "vinyl-source-stream": "^1.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrgamer/chinchilla-frontend.git"
+  },
+  "keywords": [
+    "dropbox",
+    "facebook",
+    "golang",
+    "react"
+  ],
+  "author": "mrgamer <mister.gamer@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mrgamer/chinchilla-frontend/issues"
+  },
+  "homepage": "https://github.com/mrgamer/chinchilla-frontend",
+  "private": true,
+  "jscsConfig": {
+    "preset": "airbnb",
+    "disallowMultipleVarDecl": true,
+    "requireMultipleVarDecl": null
+  }
+}
