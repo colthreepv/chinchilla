@@ -1,29 +1,30 @@
 // gulp task requires
 var gulp = require('gulp');
-var browserify = require('browserify');
-var namedStream = require('vinyl-source-stream');
 var sequence = require('run-sequence');
 var nunjucks = require('gulp-nunjucks-html');
 
 // stdlib
 var path = require('path');
 
-gulp.task('compile-src', function () {
-  var b = browserify(path.join(__dirname, 'src/') + 'main.js', {
-    entry: true,
-    debug: true
-  });
+// globals for this gulpfile
+var bowerDir = 'bower_components';
+var jsFilesDev = [
+  path.join(bowerDir, 'cash/build/debug/') + 'cash.js',
+  path.join(bowerDir, 'delorean/dist/') + 'delorean.js'
+];
+var jsFilesDist = [];
 
-  return b.bundle()
-    .pipe(namedStream('app.js'))
-    .pipe(gulp.dest('build/'));
+gulp.task('copy-libs', function () {
+  gulp.src(jsFilesDev)
+    .pipe(gulp.dest('build/libs/'));
 });
 
 gulp.task('compile-html', function (done) {
   return gulp.src('index.html')
     .pipe(nunjucks({
       locals: {
-        jsFile: 'app.js',
+        build: 'development',
+        jsFiles: jsFilesDev.map(function (j) { return 'libs/' + path.basename(j); }),
         cssFile: 'not-available.css'
       }
     }))
@@ -36,5 +37,5 @@ gulp.task('watch', function () {
 });
 
 gulp.task('default', function (done) {
-  sequence(['compile-src', 'compile-html'], 'watch');
+  sequence(['compile-html', 'copy-libs'], 'watch');
 });

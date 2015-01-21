@@ -11,13 +11,17 @@
   <!-- Place favicon.ico in the root directory -->
 
   <link rel="stylesheet" href="{{ cssFile }}">
-  <script type="text/javascript" src="{{ jsFile }}"></script>
+  {% if build != 'production' %}
+  {% for js in jsFiles -%}
+  <script type="text/javascript" src="{{ js }}"></script>
+  {%- endfor %}
+  {% endif %}
 </head>
 <body>
   <h1 id="jsMessage"></h1>
   <div>
     <button style="display:block; margin: auto;" id="chiAuth">Authorize Chinchilla</button>
-    <img src="http://www.elimoody.com/wp-content/uploads/2012/10/coffee-chinchilla-2-fb.jpg">
+    <img src="http://1.bp.blogspot.com/-sEh26M4ltNA/Td1zQ1vrFHI/AAAAAAAAAIo/a4-oa1FeDHU/s1600/Scan+6.jpeg" width="600px">
   </div>
 </body>
 </html>
