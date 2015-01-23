@@ -4,9 +4,5 @@ bower_components/
 # node
 node_modules/
 
-# building system
-build/
-dist/
-
 # BAD MAC FILES
 _DS_Store
