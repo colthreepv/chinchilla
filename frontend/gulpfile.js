@@ -1,6 +1,8 @@
 // gulp task requires
 var gulp = require('gulp');
 var gutil = require('gulp-util');
+var concatSrc = require('gulp-concat');
+var sourcemaps = require('gulp-sourcemaps');
 var sequence = require('run-sequence');
 var nunjucks = require('gulp-nunjucks-html');
 var bowerFiles = require('main-bower-files');
@@ -11,10 +13,10 @@ var bower = require('bower');
 var path = require('path');
 
 // make this go away someday
-var gdebug = require('gulp-debug');
+// var gdebug = require('gulp-debug');
 
 gulp.task('clean', function (done) {
-  del(['build/'], done);
+  del(['../static/*'], { force: true }, done);
 });
 
 gulp.task('install-libs', function (done) {
@@ -26,7 +28,15 @@ gulp.task('install-libs', function (done) {
 
 gulp.task('copy-libs', function () {
   return gulp.src(bowerFiles({ env: 'development' }))
-    .pipe(gulp.dest('build/libs/'));
+    .pipe(gulp.dest('../static/libs/'));
+});
+
+gulp.task('copy-src', function () {
+  return gulp.src('src/*.js')
+    .pipe(sourcemaps.init())
+    .pipe(concatSrc('app.js'))
+    .pipe(sourcemaps.write('.'))
+    .pipe(gulp.dest('../static/'));
 });
 
 /**
@@ -71,7 +81,7 @@ gulp.task('compile-html', function (done) {
       }
     }))
     .on('error', gutil.log)
-    .pipe(gulp.dest('build/'));
+    .pipe(gulp.dest('../static/'));
 });
 
 gulp.task('watch', function () {
@@ -80,5 +90,5 @@ gulp.task('watch', function () {
 });
 
 gulp.task('default', function (done) {
-  sequence('clean', 'install-libs', ['compile-html', 'copy-libs'], 'watch');
+  sequence('clean', 'install-libs', ['compile-html', 'copy-src', 'copy-libs'], 'watch');
 });

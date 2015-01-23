@@ -1,2 +1,5 @@
 # keep config out
 config.toml
+
+# frontend building
+static/
