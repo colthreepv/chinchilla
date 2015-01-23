@@ -85,7 +85,7 @@ gulp.task('compile-html', function (done) {
 });
 
 gulp.task('watch', function () {
-  gulp.watch(['src/*.js', 'src/**/*.js'], ['compile-src']);
+  gulp.watch(['src/*.js', 'src/**/*.js'], ['copy-src']);
   gulp.watch(['index.html'], ['compile-html']);
 });
 

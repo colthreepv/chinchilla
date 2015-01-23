@@ -1,6 +1,6 @@
 // parseHash retrives the access_token from the URL hash
 function parseHash() {
-  var accessTokenregex = /access_token=([\s\S]{64}).*(uid=\d*)/;
+  var accessTokenregex = /access_token=([\s\S]{62})&(token_type=\S*)&(uid=\d*)/;
   var regexResult;
   if (regexResult = accessTokenregex.exec(window.location.hash), regexResult.length === 3) {
     return {

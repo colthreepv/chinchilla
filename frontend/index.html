@@ -10,17 +10,16 @@
   <!-- <link rel="apple-touch-icon" href="apple-touch-icon.png"> -->
   <!-- Place favicon.ico in the root directory -->
 
-  {% if build != 'production' %}
-  {% for css in cssFiles %}
-  <link rel="stylesheet" href="{{ css }}">
-  {% endfor %}
-  {% endif %}
-
-  {% if build != 'production' %}
+  {% if build != 'production' -%}
   {% for js in jsFiles -%}
   <script type="text/javascript" src="{{ js }}"></script>
-  {%- endfor %}
+  {% endfor -%}
+  {% for css in cssFiles -%}
+  <link rel="stylesheet" href="{{ css }}">
+  {% endfor -%}
   {% endif %}
+  <!-- application code -->
+  <script type="text/javascript" src="app.js"></script>
 </head>
 <body>
   <h1 id="jsMessage"></h1>
