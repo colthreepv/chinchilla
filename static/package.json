@@ -1,0 +1,43 @@
+{
+  "name": "chinchilla-frontend",
+  "version": "0.0.1",
+  "description": "Frontend part of chinchilla https://github.com/mrgamer/chinchilla",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrgamer/chinchilla-frontend.git"
+  },
+  "keywords": [
+    "dropbox",
+    "facebook",
+    "golang",
+    "react"
+  ],
+  "author": "mrgamer <mister.gamer@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mrgamer/chinchilla-frontend/issues"
+  },
+  "homepage": "https://github.com/mrgamer/chinchilla-frontend",
+  "private": true,
+  "jscsConfig": {
+    "preset": "airbnb",
+    "disallowMultipleVarDecl": true,
+    "requireMultipleVarDecl": null,
+    "disallowSpacesInFunctionExpression": null,
+    "disallowSpacesInAnonymousFunctionExpression": null,
+    "disallowSpacesInFunctionDeclaration": null
+  },
+  "dependencies": {
+    "bower": "^1.3.12",
+    "del": "^1.1.1",
+    "gulp": "^3.8.10",
+    "gulp-nunjucks-html": "^1.1.2",
+    "gulp-util": "^3.0.2",
+    "main-bower-files": "^2.5.0",
+    "run-sequence": "^1.0.2"
+  }
+}

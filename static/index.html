@@ -1,0 +1,32 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Chinchilla</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- <link rel="apple-touch-icon" href="apple-touch-icon.png"> -->
+  <!-- Place favicon.ico in the root directory -->
+
+  {% if build != 'production' %}
+  {% for css in cssFiles %}
+  <link rel="stylesheet" href="{{ css }}">
+  {% endfor %}
+  {% endif %}
+
+  {% if build != 'production' %}
+  {% for js in jsFiles -%}
+  <script type="text/javascript" src="{{ js }}"></script>
+  {%- endfor %}
+  {% endif %}
+</head>
+<body>
+  <h1 id="jsMessage"></h1>
+  <div>
+    <button style="display:block; margin: auto;" id="chiAuth">Authorize Chinchilla</button>
+    <img src="http://1.bp.blogspot.com/-sEh26M4ltNA/Td1zQ1vrFHI/AAAAAAAAAIo/a4-oa1FeDHU/s1600/Scan+6.jpeg" width="600px">
+  </div>
+</body>
+</html>

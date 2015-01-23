@@ -1,0 +1,37 @@
+{
+  "name": "chinchilla-frontend",
+  "homepage": "https://github.com/mrgamer/chinchilla-frontend",
+  "authors": [
+    "mrgamer <mister.gamer@gmail.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "cash": "sudo-js/cash",
+    "bootstrap": "~3.3.2",
+    "delorean": "~0.8.7",
+    "react": "~0.12.2"
+  },
+  "overrides": {
+    "cash": {
+      "main": {
+        "development": "build/debug/cash.js"
+      }
+    },
+    "delorean": {
+      "main": {
+        "development": "dist/delorean.js"
+      }
+    },
+    "bootstrap": {
+      "dependencies": null
+    }
+  }
+}
