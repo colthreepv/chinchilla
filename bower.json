@@ -19,7 +19,19 @@
     "delorean": "~0.8.7",
     "react": "~0.12.2"
   },
-  "devFiles": {
-    "cash": "build/debug/cash.js"
+  "overrides": {
+    "cash": {
+      "main": {
+        "development": "build/debug/cash.js"
+      }
+    },
+    "delorean": {
+      "main": {
+        "development": "dist/delorean.js"
+      }
+    },
+    "bootstrap": {
+      "dependencies": null
+    }
   }
 }

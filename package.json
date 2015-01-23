@@ -31,6 +31,15 @@
   "jscsConfig": {
     "preset": "airbnb",
     "disallowMultipleVarDecl": true,
-    "requireMultipleVarDecl": null
+    "requireMultipleVarDecl": null,
+    "disallowSpacesInFunctionExpression": null,
+    "disallowSpacesInAnonymousFunctionExpression": null,
+    "disallowSpacesInFunctionDeclaration": null
+  },
+  "dependencies": {
+    "del": "^1.1.1",
+    "gulp-clean": "^0.3.1",
+    "gulp-util": "^3.0.2",
+    "main-bower-files": "^2.5.0"
   }
 }
