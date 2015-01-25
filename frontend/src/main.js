@@ -1,8 +1,8 @@
 // parseHash retrives the access_token from the URL hash
 function parseHash() {
-  var accessTokenregex = /access_token=([\s\S]{62})&(token_type=\S*)&(uid=\d*)/;
+  var accessTokenregex = /access_token=([\s\S]{64})&(?:token_type=\S*)&(uid=\d*)/;
   var regexResult;
-  if (regexResult = accessTokenregex.exec(window.location.hash), regexResult.length === 3) {
+  if (regexResult = accessTokenregex.exec(window.location.hash), !!regexResult && regexResult.length === 3) {
     return {
       accessToken: regexResult[1],
       uid: regexResult[2]
@@ -24,6 +24,18 @@ document.addEventListener('DOMContentLoaded', function (evt) {
     if (AT = parseHash(), !!AT) {
       h1.textContent = 'Access Token received!';
       // TODO: call server!
+      reqwest({
+        url: '/api/hello',
+        data: {
+          dropboxUser: AT.accessToken,
+          dropboxUid: AT.uid
+        }
+      }).then(function (resp) {
+        h1.textContent = 'Chinchilla approved!';
+      })
+      .fail(function (err, msg) {
+        h1.textContent = 'Chinchilla disapproves: ' + err;
+      });
     } else { // bad hash, clear it
       window.location.hash = '';
       h1.textContent = 'Access Token provided was BAD :(';

@@ -17,7 +17,8 @@
     "cash": "sudo-js/cash",
     "bootstrap": "~3.3.2",
     "delorean": "~0.8.7",
-    "react": "~0.12.2"
+    "react": "~0.12.2",
+    "reqwest": "~1.1.5"
   },
   "overrides": {
     "cash": {
@@ -32,6 +33,12 @@
     },
     "bootstrap": {
       "dependencies": null
+    },
+    "reqwest": {
+      "main": {
+        "development": "reqwest.js",
+        "production": "reqwest.min.js"
+      }
     }
   }
 }
