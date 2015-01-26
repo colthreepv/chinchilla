@@ -34,7 +34,7 @@ func main() {
 	log.Println(success("mongoDB success"))
 
 	var newUsers = make(chan *ChiUser)
-	go downloaderRoutine(newUsers)
+	go downloaderRoutine(newUsers, db, chiMongo)
 
 	// start goji
 	serveStatic()

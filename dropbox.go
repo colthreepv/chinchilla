@@ -51,14 +51,33 @@ func helloHandler(db *dropbox.Dropbox, s *mgo.Session, notify chan *ChiUser) web
 	return web.HandlerFunc(gojiHandler)
 }
 
-func fromDropToMongo(u *ChiUser) {
-
+type Downloader struct {
+	db *dropbox.Dropbox
+	s  *mgo.Session
+	// something to track goroutines created???
 }
 
-func downloaderRoutine(u chan *ChiUser) {
+func fromDropToMongo(u *ChiUser, db *dropbox.Dropbox, s *mgo.Session) {
+	db.SetAccessToken(u.DropboxUser)
+	// a delta call with an empty cursor, as described here
+	// https://www.dropbox.com/developers/blog/69/efficiently-enumerating-dropbox-with-delta
+	root, err := db.Delta("", "/")
+	if err != nil {
+		NewMongoError(u, s, err)
+		return // ends this goroutine with extreme failure
+	}
+	if len(root.Entries) >= 0 { // there's something to add to mongo
+		// BULK INSERT HERE ----
+	}
+	log.Println(debug("delta : %#v", root))
+	// TODO: this should not end here...
+}
+
+func downloaderRoutine(u chan *ChiUser, db *dropbox.Dropbox, s *mgo.Session) {
 	for {
 		var newUser *ChiUser
 		newUser = <-u
 		log.Println(debug("routine notified: %+v", newUser))
+		go fromDropToMongo(newUser, db, chiMongo) // on user creation a goroutine gets assigned to a user (quick n dirty)
 	}
 }
