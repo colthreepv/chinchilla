@@ -26,15 +26,24 @@ document.addEventListener('DOMContentLoaded', function (evt) {
       // TODO: call server!
       reqwest({
         url: '/api/hello',
-        data: {
+        method: 'POST',
+        type: 'json',
+        contentType: 'application/json',
+        data: JSON.stringify({
           dropboxUser: AT.accessToken,
           dropboxUid: AT.uid
-        }
+        })
       }).then(function (resp) {
-        h1.textContent = 'Chinchilla approved!';
+        if (resp.status === 201) {
+          h1.textContent = 'Chinchilla user created.';
+        }
+        if (resp.status === 200) {
+          h1.textContent = 'Welcome Back!';
+        }
       })
       .fail(function (err, msg) {
-        h1.textContent = 'Chinchilla disapproves: ' + err;
+        h1.textContent = 'Chinchilla disapproves: check console for err';
+        console.log(err);
       });
     } else { // bad hash, clear it
       window.location.hash = '';
