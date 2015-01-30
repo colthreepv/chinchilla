@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/stacktic/dropbox"
 	mgo "gopkg.in/mgo.v2"
-	// "gopkg.in/mgo.v2/bson"
+	"gopkg.in/mgo.v2/bson"
 
 	// "github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
@@ -11,10 +11,21 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 )
 
 type ChiUser struct {
-	DropboxUser string
+	ID           bson.ObjectId `bson:"_id,omitempty"`
+	DropboxUser  string        `bson:"dropbox_user"`
+	LatestCursor string        `bson:"latest_cursor"`
+}
+
+func (u *ChiUser) UpdateCursor(mdb *mgo.Database, cursor string) {
+	update := bson.M{"$set": bson.M{"latest_cursor": cursor}}
+	err := mdb.C("User").UpdateId(u.ID, update)
+	if err != nil {
+		NewMongoError(u, mdb, err)
+	}
 }
 
 // handler functions
@@ -29,6 +40,8 @@ func helloHandler(db *dropbox.Dropbox, s *mgo.Session, notify chan *ChiUser) web
 			return
 		}
 
+		// TODO: use Upsert
+
 		// check if corrisponding user exists already
 		isPresent, err := userC.Find(&h).Count()
 		if err != nil {
@@ -40,6 +53,7 @@ func helloHandler(db *dropbox.Dropbox, s *mgo.Session, notify chan *ChiUser) web
 			return
 		}
 		// create user instead
+		h.ID = bson.NewObjectId()
 		err = userC.Insert(&h)
 		if err != nil {
 			http.Error(w, NewChiError(err.Error()), http.StatusBadRequest)
@@ -51,26 +65,76 @@ func helloHandler(db *dropbox.Dropbox, s *mgo.Session, notify chan *ChiUser) web
 	return web.HandlerFunc(gojiHandler)
 }
 
+type ChiImage struct {
+	User  string
+	Path  string
+	Entry *dropbox.Entry
+}
+
+// Struct to track how much a specific Operation takes
+type ChiStat struct {
+	StartTime      time.Time     `bson:"start_time"`
+	ElapsedTime    time.Duration `bson:"elapsed_time"`
+	Operation      string
+	OperationCount int `bson:"operation_count"`
+}
+
 type Downloader struct {
-	db *dropbox.Dropbox
-	s  *mgo.Session
+	u   *ChiUser
+	db  *dropbox.Dropbox
+	mdb *mgo.Database
 	// something to track goroutines created???
 }
 
-func fromDropToMongo(u *ChiUser, db *dropbox.Dropbox, s *mgo.Session) {
-	db.SetAccessToken(u.DropboxUser)
+// constructor for Downloader
+func NewDownloader(u *ChiUser, db *dropbox.Dropbox, mdb *mgo.Database) *Downloader {
+	return &Downloader{u: u, db: db, mdb: mdb}
+}
+
+func (d Downloader) Start() {
+	defer d.Continue("") // we call Continue starting with a blank cursor
+	log.Println(debug("Starting image loading"))
+}
+
+func (d Downloader) Continue(cursor string) {
+	var stat *ChiStat = &ChiStat{StartTime: time.Now(), Operation: "Delta"}
+	d.db.SetAccessToken(d.u.DropboxUser)
 	// a delta call with an empty cursor, as described here
 	// https://www.dropbox.com/developers/blog/69/efficiently-enumerating-dropbox-with-delta
-	root, err := db.Delta("", "/")
+	deltaP, err := d.db.Delta(cursor, "/")
 	if err != nil {
-		NewMongoError(u, s, err)
+		NewMongoError(d.u, d.mdb, err)
 		return // ends this goroutine with extreme failure
 	}
-	if len(root.Entries) >= 0 { // there's something to add to mongo
-		// BULK INSERT HERE ----
+	if len(deltaP.Entries) >= 0 { // add all images reported from dropbox, to mongo
+		images := d.mdb.C("Image").Bulk()
+		for _, dEntry := range deltaP.Entries {
+			images.Insert(&ChiImage{User: d.u.DropboxUser, Path: dEntry.Path, Entry: dEntry.Entry})
+		}
+		images.Unordered()
+		_, err := images.Run()
+		if err != nil {
+			NewMongoError(d.u, d.mdb, err)
+			return
+		}
 	}
-	log.Println(debug("delta : %#v", root))
-	// TODO: this should not end here...
+	if deltaP.HasMore {
+		defer d.Continue(deltaP.Cursor.Cursor)
+	} else {
+		// update user with latest cursor
+		d.u.UpdateCursor(d.mdb, deltaP.Cursor.Cursor)
+		// TODO: notify that delta is done to the ThumbnailDownloader
+		log.Println(debug("Wooo! All files bulk-inserted!"))
+	}
+
+	// Send statistical data
+	stat.ElapsedTime = time.Since(stat.StartTime)
+	stat.OperationCount = len(deltaP.Entries)
+	err = d.mdb.C("Stat").Insert(stat)
+	if err != nil {
+		NewMongoError(d.u, d.mdb, err)
+		return
+	}
 }
 
 func downloaderRoutine(u chan *ChiUser, db *dropbox.Dropbox, s *mgo.Session) {
@@ -78,6 +142,7 @@ func downloaderRoutine(u chan *ChiUser, db *dropbox.Dropbox, s *mgo.Session) {
 		var newUser *ChiUser
 		newUser = <-u
 		log.Println(debug("routine notified: %+v", newUser))
-		go fromDropToMongo(newUser, db, chiMongo) // on user creation a goroutine gets assigned to a user (quick n dirty)
+		newDownloader := NewDownloader(newUser, db, s.DB(chi.Mongo.Database))
+		go newDownloader.Start() // on user creation a goroutine gets assigned to a user (quick n dirty)
 	}
 }
