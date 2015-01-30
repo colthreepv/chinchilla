@@ -1,12 +1,6 @@
 # chinchilla
-A simple Golang service that takes pictures from dropbox and puts them on facebook.
-
-## NOTE: this repo has submodules
-To check it out properly:
-
-```bash
-$ git clone --recursive https://github.com/mrgamer/chinchilla.git
-```
+A simple Go service that takes pictures from dropbox and puts them on facebook.  
+<a href="https://www.pinterest.com/pin/304837468499947408/"><img src="https://s-media-cache-ak0.pinimg.com/736x/3b/3e/ae/3b3eae66e5a656c7eceaf3ef56414a6d.jpg" height="500px"></a>
 
 ## Example config.toml (REQUIRED)
 Chinchilla requires yourself to register a dropbox app (more details later), and a facebook app.  

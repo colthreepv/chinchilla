@@ -23,8 +23,9 @@ type EngineError struct {
 	User      string // HARD: make a relationship into mongo, I DONT KNOW YET!!!
 }
 
-func NewMongoError(u *ChiUser, s *mgo.Session, e error) {
-	errorC := s.DB(chi.Mongo.Database).C("Error")
+// FIXME: errors does get populated correctly, `e` is always empyy
+func NewMongoError(u *ChiUser, mdb *mgo.Database, e error) {
+	errorC := mdb.C("Error")
 	var mErr *EngineError = &EngineError{E: e, CreatedAt: time.Now(), User: u.DropboxUser}
 	err := errorC.Insert(mErr)
 	if err != nil { // YO DAWN AN ERROR IN AN ERROR HANDLER.. WTF?
