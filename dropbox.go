@@ -9,6 +9,7 @@ import (
 	"github.com/zenazn/goji/web"
 
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -18,19 +19,36 @@ type ChiUser struct {
 	ID           bson.ObjectId `bson:"_id,omitempty"`
 	DropboxUser  string        `bson:"dropbox_user"`
 	LatestCursor string        `bson:"latest_cursor"`
+
+	mongoCollection *mgo.Collection
+	saved           bool
 }
 
-func (u *ChiUser) UpdateCursor(mdb *mgo.Database, cursor string) {
-	update := bson.M{"$set": bson.M{"latest_cursor": cursor}}
-	err := mdb.C("User").UpdateId(u.ID, update)
-	if err != nil {
-		NewMongoError(u, mdb, err)
+func (c *ChiUser) UpdateCursor(cursor string) error {
+	if !c.saved {
+		return errors.New("called UpdateCursor, but the specified Chiuser has not been saved.. yet!")
 	}
+	update := bson.M{"$set": bson.M{"latest_cursor": cursor}}
+	err := c.mongoCollection.UpdateId(c.ID, update)
+	if err != nil {
+		NewMongoError(c, err)
+		return err
+	}
+	return nil
+}
+
+func (c *ChiUser) Save() error {
+	err := c.mongoCollection.Insert(c)
+	if err != nil {
+		return err
+	}
+	c.saved = true
+	return nil
 }
 
 // handler functions
 func helloHandler(db *dropbox.Dropbox, s *mgo.Session, notify chan *ChiUser) web.Handler {
-	userC := s.DB(chi.Mongo.Database).C("User")
+	userC := s.DB(config.Mongo.Database).C("User")
 	gojiHandler := func(c web.C, w http.ResponseWriter, r *http.Request) {
 		var h ChiUser
 		decoder := json.NewDecoder(r.Body)
@@ -42,6 +60,7 @@ func helloHandler(db *dropbox.Dropbox, s *mgo.Session, notify chan *ChiUser) web
 
 		// TODO: use Upsert
 
+		// FIXME: this lookup is broken!!!
 		// check if corrisponding user exists already
 		isPresent, err := userC.Find(&h).Count()
 		if err != nil {
@@ -103,7 +122,7 @@ func (d Downloader) Continue(cursor string) {
 	// https://www.dropbox.com/developers/blog/69/efficiently-enumerating-dropbox-with-delta
 	deltaP, err := d.db.Delta(cursor, "/")
 	if err != nil {
-		NewMongoError(d.u, d.mdb, err)
+		NewMongoError(d.u, err)
 		return // ends this goroutine with extreme failure
 	}
 	if len(deltaP.Entries) >= 0 { // add all images reported from dropbox, to mongo
@@ -114,7 +133,7 @@ func (d Downloader) Continue(cursor string) {
 		images.Unordered()
 		_, err := images.Run()
 		if err != nil {
-			NewMongoError(d.u, d.mdb, err)
+			NewMongoError(d.u, err)
 			return
 		}
 	}
@@ -122,7 +141,7 @@ func (d Downloader) Continue(cursor string) {
 		defer d.Continue(deltaP.Cursor.Cursor)
 	} else {
 		// update user with latest cursor
-		d.u.UpdateCursor(d.mdb, deltaP.Cursor.Cursor)
+		d.u.UpdateCursor(deltaP.Cursor.Cursor)
 		// TODO: notify that delta is done to the ThumbnailDownloader
 		log.Println(debug("Wooo! All files bulk-inserted!"))
 	}
@@ -132,7 +151,7 @@ func (d Downloader) Continue(cursor string) {
 	stat.OperationCount = len(deltaP.Entries)
 	err = d.mdb.C("Stat").Insert(stat)
 	if err != nil {
-		NewMongoError(d.u, d.mdb, err)
+		NewMongoError(d.u, err)
 		return
 	}
 }
@@ -142,7 +161,7 @@ func downloaderRoutine(u chan *ChiUser, db *dropbox.Dropbox, s *mgo.Session) {
 		var newUser *ChiUser
 		newUser = <-u
 		log.Println(debug("routine notified: %+v", newUser))
-		newDownloader := NewDownloader(newUser, db, s.DB(chi.Mongo.Database))
+		newDownloader := NewDownloader(newUser, db, s.DB(config.Mongo.Database))
 		go newDownloader.Start() // on user creation a goroutine gets assigned to a user (quick n dirty)
 	}
 }
